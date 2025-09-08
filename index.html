@@ -657,7 +657,7 @@
 
                 // Данные фрейма
                 const frameData = new Uint8Array(frameSize);
-                frameData[0] = 0; // Кодировка ISO-8859-1
+                frameData[0] = 3; // Кодировка UTF-8 (код 3 в ID3v2)
                 frameData.set(textBytes, 1);
 
                 // Объединяем заголовок и данные
