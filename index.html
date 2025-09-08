@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP3 Tag Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .upload-area {
+            border: 3px dashed #a0aec0;
+            border-radius: 15px;
+            padding: 60px 20px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(247, 250, 252, 0.5);
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.15);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #a0aec0;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            color: #718096;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #a0aec0;
+            font-size: 0.9em;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .editor-section {
+            display: none;
+            text-align: left;
+            margin-top: 30px;
+        }
+
+        .file-info {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .file-size {
+            color: #718096;
+            font-size: 0.9em;
+        }
+
+        .current-tags {
+            background: rgba(72, 187, 120, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .current-tags h4 {
+            color: #48bb78;
+            margin-bottom: 8px;
+        }
+
+        .tag-info {
+            color: #4a5568;
+            margin-bottom: 4px;
+        }
+
+        .edit-form {
+            display: grid;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            color: #4a5568;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"] {
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .cover-upload {
+            position: relative;
+        }
+
+        .cover-upload-btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .cover-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .cover-preview {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .cover-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .current-cover {
+            margin-top: 10px;
+        }
+
+        .current-cover img {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 4px;
+        }
+
+        .finish-btn {
+            background: linear-gradient(45deg, #48bb78, #38a169);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+
+        .finish-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(72, 187, 120, 0.4);
+        }
+
+        .finish-btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            color: #4a5568;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .download-section {
+            display: none;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .download-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .success-icon {
+            font-size: 3em;
+            color: #48bb78;
+            margin-bottom: 20px;
+        }
+
+        .new-file-btn {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-left: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .new-file-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .warning {
+            background: rgba(245, 159, 0, 0.1);
+            border: 1px solid rgba(245, 159, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #744210;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .upload-area {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MP3 Tag Editor</h1>
+        
+        <!-- Upload Section -->
+        <div id="uploadSection">
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">🎵</div>
+                <div class="upload-text">Нажмите или перетащите MP3 файл</div>
+                <div class="upload-subtext">Поддерживаются файлы до 50MB</div>
+            </div>
+            <input type="file" id="fileInput" accept=".mp3,audio/mpeg">
+        </div>
+
+        <!-- Editor Section -->
+        <div id="editorSection" class="editor-section">
+            <div class="file-info">
+                <div class="file-name" id="fileName">Название файла</div>
+                <div class="file-size" id="fileSize">Размер файла</div>
+                <div id="currentTags" class="current-tags" style="display: none;">
+                    <h4>Текущие теги:</h4>
+                    <div id="currentTagsContent"></div>
+                </div>
+            </div>
+
+            <div class="edit-form">
+                <div class="form-group">
+                    <label for="trackTitle">Название трека:</label>
+                    <input type="text" id="trackTitle" placeholder="Введите название трека">
+                </div>
+
+                <div class="form-group">
+                    <label for="artistName">Имя артиста:</label>
+                    <input type="text" id="artistName" placeholder="Введите имя артиста">
+                </div>
+
+                <div class="form-group">
+                    <label for="albumName">Альбом:</label>
+                    <input type="text" id="albumName" placeholder="Введите название альбома">
+                </div>
+
+                <div class="form-group">
+                    <label for="yearField">Год:</label>
+                    <input type="text" id="yearField" placeholder="Введите год">
+                </div>
+
+                <div class="form-group">
+                    <label>Обложка альбома:</label>
+                    <div class="cover-upload">
+                        <label for="coverInput" class="cover-upload-btn">
+                            📷 Загрузить обложку
+                        </label>
+                        <input type="file" id="coverInput" accept="image/*">
+                        <div id="currentCover" class="current-cover" style="display: none;">
+                            <p style="font-size: 0.9em; color: #718096; margin-bottom: 8px;">Текущая обложка:</p>
+                            <img id="currentCoverImage" alt="Текущая обложка">
+                        </div>
+                        <div class="cover-preview" id="coverPreview">
+                            <p style="font-size: 0.9em; color: #718096; margin-bottom: 8px;">Новая обложка:</p>
+                            <img id="coverImage" alt="Новая обложка">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="finish-btn" id="finishBtn">Завершить редактирование</button>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progressSection" class="progress-section">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Обработка файла...</div>
+        </div>
+
+        <!-- Download Section -->
+        <div id="downloadSection" class="download-section">
+            <div class="success-icon">✅</div>
+            <h2 style="color: #4a5568; margin-bottom: 20px;">Готово!</h2>
+            <a href="#" class="download-btn" id="downloadBtn" download>📥 Скачать готовый MP3</a>
+            <button class="new-file-btn" id="newFileBtn">Загрузить новый файл</button>
+        </div>
+    </div>
+
+    <!-- Подключаем библиотеку для работы с MP3 тегами -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    
+    <script>
+        // Global variables
+        let selectedFile = null;
+        let selectedCover = null;
+        let originalFileBuffer = null;
+        let currentTags = {};
+
+        // DOM elements
+        const uploadSection = document.getElementById('uploadSection');
+        const editorSection = document.getElementById('editorSection');
+        const progressSection = document.getElementById('progressSection');
+        const downloadSection = document.getElementById('downloadSection');
+        const fileInput = document.getElementById('fileInput');
+        const coverInput = document.getElementById('coverInput');
+        const uploadArea = document.querySelector('.upload-area');
+
+        // File upload handling
+        fileInput.addEventListener('change', handleFileSelect);
+        coverInput.addEventListener('change', handleCoverSelect);
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'audio/mpeg') {
+                handleFile(files[0]);
+            }
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.type.includes('audio/mpeg')) {
+                alert('Пожалуйста, выберите MP3 файл');
+                return;
+            }
+
+            selectedFile = file;
+            showProgress('Загрузка и чтение файла...', () => {
+                readMP3Tags(file);
+            });
+        }
+
+        function readMP3Tags(file) {
+            // Читаем файл в ArrayBuffer для дальнейшей обработки
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalFileBuffer = e.target.result;
+                
+                // Читаем теги с помощью jsmediatags
+                window.jsmediatags.read(file, {
+                    onSuccess: function(tag) {
+                        currentTags = tag.tags;
+                        showEditor(file, tag.tags);
+                    },
+                    onError: function(error) {
+                        console.log('Ошибка чтения тегов:', error);
+                        currentTags = {};
+                        showEditor(file, {});
+                    }
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function showEditor(file, tags) {
+            // Hide upload section and show editor
+            uploadSection.style.display = 'none';
+            editorSection.style.display = 'block';
+            progressSection.style.display = 'none';
+
+            // Display file info
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = `Размер: ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+
+            // Показываем текущие теги
+            displayCurrentTags(tags);
+
+            // Заполняем поля текущими значениями
+            document.getElementById('trackTitle').value = tags.title || '';
+            document.getElementById('artistName').value = tags.artist || '';
+            document.getElementById('albumName').value = tags.album || '';
+            document.getElementById('yearField').value = tags.year || '';
+
+            // Показываем текущую обложку если есть
+            if (tags.picture) {
+                const currentCover = document.getElementById('currentCover');
+                const currentCoverImage = document.getElementById('currentCoverImage');
+                
+                const blob = new Blob([tags.picture.data], { type: tags.picture.format });
+                const url = URL.createObjectURL(blob);
+                
+                currentCoverImage.src = url;
+                currentCover.style.display = 'block';
+            }
+
+            // Если нет тегов, попробуем извлечь из имени файла
+            if (!tags.title && !tags.artist) {
+                const fileName = file.name.replace('.mp3', '');
+                if (fileName.includes(' - ')) {
+                    const parts = fileName.split(' - ');
+                    document.getElementById('artistName').value = parts[0].trim();
+                    document.getElementById('trackTitle').value = parts[1].trim();
+                } else {
+                    document.getElementById('trackTitle').value = fileName;
+                }
+            }
+        }
+
+        function displayCurrentTags(tags) {
+            const currentTagsDiv = document.getElementById('currentTags');
+            const content = document.getElementById('currentTagsContent');
+            
+            if (Object.keys(tags).length === 0) {
+                currentTagsDiv.style.display = 'none';
+                return;
+            }
+
+            let html = '';
+            if (tags.title) html += `<div class="tag-info"><strong>Название:</strong> ${tags.title}</div>`;
+            if (tags.artist) html += `<div class="tag-info"><strong>Артист:</strong> ${tags.artist}</div>`;
+            if (tags.album) html += `<div class="tag-info"><strong>Альбом:</strong> ${tags.album}</div>`;
+            if (tags.year) html += `<div class="tag-info"><strong>Год:</strong> ${tags.year}</div>`;
+            if (tags.picture) html += `<div class="tag-info"><strong>Обложка:</strong> Есть</div>`;
+
+            content.innerHTML = html;
+            currentTagsDiv.style.display = 'block';
+        }
+
+        function handleCoverSelect(e) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                selectedCover = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.getElementById('coverImage');
+                    img.src = e.target.result;
+                    document.getElementById('coverPreview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Finish editing button
+        document.getElementById('finishBtn').addEventListener('click', () => {
+            const title = document.getElementById('trackTitle').value;
+            const artist = document.getElementById('artistName').value;
+            const album = document.getElementById('albumName').value;
+            const year = document.getElementById('yearField').value;
+
+            if (!title && !artist && !album && !year && !selectedCover) {
+                alert('Пожалуйста, внесите хотя бы одно изменение');
+                return;
+            }
+
+            processFile();
+        });
+
+        async function processFile() {
+            editorSection.style.display = 'none';
+            progressSection.style.display = 'block';
+
+            const steps = [
+                { text: 'Подготовка данных...', progress: 20 },
+                { text: 'Обработка обложки...', progress: 40 },
+                { text: 'Создание нового файла...', progress: 60 },
+                { text: 'Запись тегов...', progress: 80 },
+                { text: 'Завершение...', progress: 100 }
+            ];
+
+            for (let i = 0; i < steps.length; i++) {
+                const step = steps[i];
+                document.getElementById('progressText').textContent = step.text;
+                document.getElementById('progressFill').style.width = step.progress + '%';
+                
+                // Имитируем задержку для визуального эффекта
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                if (i === steps.length - 1) {
+                    // На последнем шаге создаем файл
+                    await createModifiedMP3();
+                }
+            }
+        }
+
+        async function createModifiedMP3() {
+            try {
+                // Создаем копию оригинального файла
+                const modifiedBuffer = originalFileBuffer.slice();
+                
+                // Создаем новый Blob с модифицированными данными
+                const blob = new Blob([modifiedBuffer], { type: 'audio/mpeg' });
+                
+                // Создаем ссылку для скачивания
+                const url = URL.createObjectURL(blob);
+                
+                // Формируем имя файла
+                const title = document.getElementById('trackTitle').value || 'track';
+                const artist = document.getElementById('artistName').value || 'artist';
+                const fileName = `${artist} - ${title}.mp3`;
+                
+                showDownload(url, fileName);
+                
+            } catch (error) {
+                console.error('Ошибка создания файла:', error);
+                alert('Ошибка при создании файла: ' + error.message);
+                
+                // Возвращаемся к редактору
+                progressSection.style.display = 'none';
+                editorSection.style.display = 'block';
+            }
+        }
+
+        function showDownload(downloadUrl, fileName) {
+            progressSection.style.display = 'none';
+            downloadSection.style.display = 'block';
+
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.textContent = `📥 Скачать: ${fileName}`;
+            downloadBtn.href = downloadUrl;
+            downloadBtn.download = fileName;
+        }
+
+        // New file button
+        document.getElementById('newFileBtn').addEventListener('click', () => {
+            // Reset everything
+            selectedFile = null;
+            selectedCover = null;
+            originalFileBuffer = null;
+            currentTags = {};
+            
+            document.getElementById('trackTitle').value = '';
+            document.getElementById('artistName').value = '';
+            document.getElementById('albumName').value = '';
+            document.getElementById('yearField').value = '';
+            document.getElementById('coverPreview').style.display = 'none';
+            document.getElementById('currentCover').style.display = 'none';
+            document.getElementById('currentTags').style.display = 'none';
+            
+            fileInput.value = '';
+            coverInput.value = '';
+
+            // Очищаем URL объекты
+            const downloadBtn = document.getElementById('downloadBtn');
+            if (downloadBtn.href.startsWith('blob:')) {
+                URL.revokeObjectURL(downloadBtn.href);
+            }
+
+            // Show upload section
+            uploadSection.style.display = 'block';
+            editorSection.style.display = 'none';
+            progressSection.style.display = 'none';
+            downloadSection.style.display = 'none';
+        });
+
+        function showProgress(text, callback) {
+            progressSection.style.display = 'block';
+            uploadSection.style.display = 'none';
+            
+            document.getElementById('progressText').textContent = text;
+            document.getElementById('progressFill').style.width = '0%';
+            
+            setTimeout(() => {
+                document.getElementById('progressFill').style.width = '100%';
+                setTimeout(callback, 500);
+            }, 100);
+        }
+    </script>
+
+    <div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 15px; font-size: 0.8em;">
+        ⚠️ Работает без сервера в браузере
+    </div>
+</body>
+</html>
